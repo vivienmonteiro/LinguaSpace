@@ -15,6 +15,7 @@ export async function GET() {
   try {
     const teacherId = session.user.id;
 
+    // Menghitung total kursus milik teacher
     const courseResult = await pool.query(
       `SELECT COUNT(*) AS total
        FROM courses
@@ -22,14 +23,27 @@ export async function GET() {
       [teacherId]
     );
 
+    // Menghitung jumlah student unik di seluruh kursus teacher
     const studentResult = await pool.query(
       `SELECT COUNT(DISTINCT e.student_id) AS total
        FROM enrollments e
        JOIN courses c ON e.course_id = c.id
+       JOIN users u ON e.student_id = u.id
+       WHERE c.teacher_id = $1
+         AND u.role = 'student'`,
+      [teacherId]
+    );
+
+    // Menghitung total materi dari seluruh kursus teacher
+    const contentResult = await pool.query(
+      `SELECT COUNT(*) AS total
+       FROM contents ct
+       JOIN courses c ON ct.course_id = c.id
        WHERE c.teacher_id = $1`,
       [teacherId]
     );
 
+    // Mengambil daftar kursus milik teacher
     const coursesResult = await pool.query(
       `SELECT
           c.id,
@@ -37,10 +51,26 @@ export async function GET() {
           c.level,
           cat.name AS category_name
        FROM courses c
-       LEFT JOIN categories cat
-          ON c.category_id = cat.id
+       LEFT JOIN categories cat ON c.category_id = cat.id
        WHERE c.teacher_id = $1
        ORDER BY c.id DESC`,
+      [teacherId]
+    );
+
+    // Mengambil nama student unik beserta kursus yang diikuti
+    const studentsResult = await pool.query(
+      `SELECT
+          u.id,
+          u.username,
+          u.email,
+          ARRAY_AGG(DISTINCT c.name ORDER BY c.name) AS course_names
+       FROM enrollments e
+       JOIN courses c ON e.course_id = c.id
+       JOIN users u ON e.student_id = u.id
+       WHERE c.teacher_id = $1
+         AND u.role = 'student'
+       GROUP BY u.id, u.username, u.email
+       ORDER BY u.username ASC`,
       [teacherId]
     );
 
@@ -49,10 +79,11 @@ export async function GET() {
       data: {
         totalCourses: Number(courseResult.rows[0].total),
         totalStudents: Number(studentResult.rows[0].total),
+        totalContents: Number(contentResult.rows[0].total),
         courses: coursesResult.rows,
+        students: studentsResult.rows,
       },
     });
-
   } catch (error) {
     console.error("Teacher stats error:", error);
 
