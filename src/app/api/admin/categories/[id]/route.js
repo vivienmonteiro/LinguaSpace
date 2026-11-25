@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -58,6 +59,8 @@ export async function PUT(request, { params }) {
       data: result.rows[0],
     });
   } catch (error) {
+    console.error("UPDATE CATEGORY ERROR:", error);
+
     return NextResponse.json(
       { success: false, message: "Gagal mengedit kategori." },
       { status: 500 }
@@ -98,6 +101,8 @@ export async function DELETE(request, { params }) {
       message: "Kategori berhasil dihapus!",
     });
   } catch (error) {
+    console.error("DELETE CATEGORY ERROR:", error);
+
     return NextResponse.json(
       {
         success: false,

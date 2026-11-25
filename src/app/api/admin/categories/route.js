@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -5,7 +6,10 @@ import { getSession } from "@/lib/session";
 async function cekAdmin() {
   const session = await getSession();
 
+  console.log("ADMIN SESSION:", session.user);
+
   if (!session.user || session.user.role !== "admin") {
+    console.log("AKSES DITOLAK. ROLE:", session.user?.role);
     return false;
   }
 
@@ -35,6 +39,8 @@ export async function GET() {
       data: result.rows,
     });
   } catch (error) {
+    console.error("GET CATEGORY ERROR:", error);
+
     return NextResponse.json(
       { success: false, message: "Gagal mengambil kategori." },
       { status: 500 }
@@ -77,6 +83,8 @@ export async function POST(request) {
       data: result.rows[0],
     });
   } catch (error) {
+    console.error("POST CATEGORY ERROR:", error);
+
     return NextResponse.json(
       { success: false, message: "Gagal menambahkan kategori." },
       { status: 500 }
