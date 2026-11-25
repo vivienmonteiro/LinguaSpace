@@ -23,6 +23,12 @@ export default function TeacherContents({ courseId }) {
   const [deleteContent, setDeleteContent] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // STATE FORUM DISKUSI
+  const [comments, setComments] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
+  const [commentLoading, setCommentLoading] = useState(null);
+
+  // MENGAMBIL DATA MATERI
   async function loadContents() {
     try {
       const response = await fetch(
@@ -50,6 +56,78 @@ export default function TeacherContents({ courseId }) {
     loadContents();
   }, [courseId]);
 
+  // MENGAMBIL KOMENTAR SETIAP MATERI
+  async function fetchComments(contentId) {
+    try {
+      const response = await fetch(
+        `/api/student/comments?content_id=${contentId}`
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        setComments((prev) => ({
+          ...prev,
+          [contentId]: result.data,
+        }));
+      }
+    } catch (error) {
+      console.error("Gagal mengambil komentar:", error);
+    }
+  }
+
+  useEffect(() => {
+    contents.forEach((content) => {
+      fetchComments(content.id);
+    });
+  }, [contents]);
+
+  // MENGIRIM BALASAN TEACHER
+  async function handleSendComment(contentId) {
+    const comment = commentInputs[contentId]?.trim();
+
+    if (!comment) return;
+
+    try {
+      setCommentLoading(contentId);
+
+      const response = await fetch("/api/student/comments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content_id: contentId,
+          comment,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        setMessage(result.message || "Gagal mengirim balasan.");
+        setMessageType("error");
+        return;
+      }
+
+      setCommentInputs((prev) => ({
+        ...prev,
+        [contentId]: "",
+      }));
+
+      await fetchComments(contentId);
+
+      setMessage("Balasan berhasil dikirim!");
+      setMessageType("success");
+    } catch {
+      setMessage("Gagal mengirim balasan.");
+      setMessageType("error");
+    } finally {
+      setCommentLoading(null);
+    }
+  }
+
+  // MENAMBAHKAN MATERI
   async function handleAdd(e) {
     e.preventDefault();
     setMessage("");
@@ -93,6 +171,7 @@ export default function TeacherContents({ courseId }) {
     }
   }
 
+  // MEMBUKA FORM EDIT
   function handleEdit(content) {
     setEditContent(content);
     setEditTitle(content.title || "");
@@ -102,6 +181,7 @@ export default function TeacherContents({ courseId }) {
     setEditOrderIndex(content.order_index || 1);
   }
 
+  // MENYIMPAN EDIT MATERI
   async function handleSaveEdit(e) {
     e.preventDefault();
     setMessage("");
@@ -144,6 +224,7 @@ export default function TeacherContents({ courseId }) {
     }
   }
 
+  // MENGHAPUS MATERI
   async function handleDelete() {
     if (!deleteContent) return;
 
@@ -183,20 +264,7 @@ export default function TeacherContents({ courseId }) {
           <div>
             <div className="mb-2 flex items-center gap-2">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#EDE5FF] text-xl text-[#805AD5]">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="23"
-                  height="23"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-                </svg>
+                📚
               </div>
 
               <span className="text-sm font-semibold text-[#9078C8]">
@@ -209,7 +277,7 @@ export default function TeacherContents({ courseId }) {
             </h1>
 
             <p className="mt-2 text-sm text-[#89819B] md:text-base">
-              Kelola materi pembelajaran kursus kamu dengan mudah.
+              Kelola materi pembelajaran dan diskusi kursus kamu.
             </p>
           </div>
 
@@ -217,21 +285,7 @@ export default function TeacherContents({ courseId }) {
             href="/teacher/dashboard"
             className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#E8DFFF] bg-white px-5 py-3 text-sm font-semibold text-[#7655B5] shadow-sm transition hover:bg-[#F1EBFF]"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m15 18-6-6 6-6" />
-              <path d="M20 12H9" />
-            </svg>
-            Back to Dashboard
+            ← Back to Dashboard
           </Link>
         </div>
 
@@ -257,38 +311,18 @@ export default function TeacherContents({ courseId }) {
             <div className="h-2 bg-gradient-to-r from-[#BCA4F5] via-[#D6C4FF] to-[#E9DFFF]" />
 
             <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#F0EAFE] text-[#8B6BCB]">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="27"
-                    height="27"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 3 2 8l10 5 10-5-10-5Z" />
-                    <path d="m6 10 6 3 6-3" />
-                    <path d="M2 8v8l10 5 10-5V8" />
-                  </svg>
-                </div>
+              <div>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wider text-[#A18BCB]">
+                  Current Course
+                </p>
 
-                <div>
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wider text-[#A18BCB]">
-                    Current Course
-                  </p>
+                <h2 className="text-lg font-bold text-[#30264A] md:text-xl">
+                  {course.name}
+                </h2>
 
-                  <h2 className="text-lg font-bold text-[#30264A] md:text-xl">
-                    {course.name}
-                  </h2>
-
-                  <p className="mt-1 text-sm text-[#968DA6]">
-                    Course ID: {course.id}
-                  </p>
-                </div>
+                <p className="mt-1 text-sm text-[#968DA6]">
+                  Course ID: {course.id}
+                </p>
               </div>
 
               <div className="w-fit rounded-xl bg-[#F2EDFF] px-4 py-2 text-sm font-semibold text-[#7957B7]">
@@ -300,32 +334,13 @@ export default function TeacherContents({ courseId }) {
 
         {/* ADD CONTENT FORM */}
         <div className="mb-8 rounded-2xl border border-[#EAE2FA] bg-white p-5 shadow-sm md:p-7">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F0EAFE] text-[#8665C5]">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="21"
-                height="21"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 5v14" />
-                <path d="M5 12h14" />
-              </svg>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-bold text-[#30264A]">
-                Add New Content
-              </h2>
-              <p className="mt-1 text-xs text-[#A098AD]">
-                Tambahkan materi baru untuk kursus ini.
-              </p>
-            </div>
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-[#30264A]">
+              Add New Content
+            </h2>
+            <p className="mt-1 text-xs text-[#A098AD]">
+              Tambahkan materi baru untuk kursus ini.
+            </p>
           </div>
 
           <form onSubmit={handleAdd} className="space-y-5">
@@ -339,7 +354,7 @@ export default function TeacherContents({ courseId }) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Contoh: Introduction to English"
-                className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none transition placeholder:text-[#B1A9BD] focus:border-[#A78BDF] focus:ring-4 focus:ring-[#EDE5FF]"
+                className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF]"
                 required
               />
             </div>
@@ -354,7 +369,7 @@ export default function TeacherContents({ courseId }) {
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Deskripsi materi pembelajaran..."
                 rows={4}
-                className="w-full resize-y rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none transition placeholder:text-[#B1A9BD] focus:border-[#A78BDF] focus:ring-4 focus:ring-[#EDE5FF]"
+                className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF]"
               />
             </div>
 
@@ -368,7 +383,7 @@ export default function TeacherContents({ courseId }) {
                 min="1"
                 value={orderIndex}
                 onChange={(e) => setOrderIndex(e.target.value)}
-                className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none transition focus:border-[#A78BDF] focus:ring-4 focus:ring-[#EDE5FF]"
+                className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF]"
                 required
               />
             </div>
@@ -376,64 +391,36 @@ export default function TeacherContents({ courseId }) {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8967CA] px-6 py-3 text-sm font-semibold text-white shadow-md shadow-[#8967CA]/20 transition hover:bg-[#7654B8] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-xl bg-[#8967CA] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#7654B8] disabled:opacity-60"
             >
-              <span>+</span>
-              {submitting ? "Adding..." : "Add Content"}
+              {submitting ? "Adding..." : "+ Add Content"}
             </button>
           </form>
         </div>
 
         {/* CONTENT LIST */}
         <div className="overflow-hidden rounded-2xl border border-[#EAE2FA] bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-[#F0EBF7] px-5 py-5 sm:flex-row sm:items-center sm:justify-between md:px-7">
-            <div>
-              <h2 className="text-lg font-bold text-[#30264A]">
-                Course Contents
-              </h2>
-              <p className="mt-1 text-sm text-[#9A91A9]">
-                Daftar seluruh materi pembelajaran kursus.
-              </p>
-            </div>
+          <div className="border-b border-[#F0EBF7] px-5 py-5 md:px-7">
+            <h2 className="text-lg font-bold text-[#30264A]">
+              Course Contents
+            </h2>
 
-            <div className="w-fit rounded-lg bg-[#F2EDFF] px-3 py-2 text-xs font-semibold text-[#7957B7]">
-              {contents.length} Total Materi
-            </div>
+            <p className="mt-1 text-sm text-[#9A91A9]">
+              Daftar materi dan forum diskusi setiap materi.
+            </p>
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center px-5 py-16">
-              <div className="mb-4 h-9 w-9 animate-spin rounded-full border-4 border-[#E9DFFF] border-t-[#8967CA]" />
-              <p className="text-sm text-[#968DA6]">
-                Loading contents...
-              </p>
+            <div className="px-5 py-16 text-center text-sm text-[#968DA6]">
+              Loading contents...
             </div>
           ) : contents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F2EDFF] text-[#8967CA]">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="30"
-                  height="30"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-                </svg>
-              </div>
-
+            <div className="px-5 py-16 text-center">
               <h3 className="font-bold text-[#514568]">
                 Belum Ada Materi
               </h3>
-
-              <p className="mt-2 max-w-sm text-sm text-[#A098AD]">
-                Kursus ini belum memiliki materi pembelajaran.
-                Silakan tambahkan materi melalui formulir di atas.
+              <p className="mt-2 text-sm text-[#A098AD]">
+                Tambahkan materi melalui formulir di atas.
               </p>
             </div>
           ) : (
@@ -441,40 +428,128 @@ export default function TeacherContents({ courseId }) {
               {contents.map((content) => (
                 <div
                   key={content.id}
-                  className="flex flex-col justify-between gap-5 px-5 py-5 transition hover:bg-[#FCFAFF] md:flex-row md:items-center md:px-7"
+                  className="px-5 py-6 md:px-7"
                 >
-                  <div className="flex min-w-0 flex-1 items-start gap-4">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDE5FF] text-sm font-bold text-[#805DBF]">
-                      {content.order_index}
+                  {/* INFORMASI MATERI */}
+                  <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
+                    <div className="flex min-w-0 flex-1 items-start gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDE5FF] text-sm font-bold text-[#805DBF]">
+                        {content.order_index}
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="break-words font-bold text-[#403451]">
+                          {content.title}
+                        </h3>
+
+                        <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#8D849C]">
+                          {content.description ||
+                            content.content ||
+                            "Tidak ada deskripsi."}
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <h3 className="break-words font-bold text-[#403451]">
-                        {content.title}
-                      </h3>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        onClick={() => handleEdit(content)}
+                        className="rounded-lg border border-[#E2D5FA] bg-[#F0EAFE] px-4 py-2 text-sm font-semibold text-[#7957B7] hover:bg-[#E5D9FF]"
+                      >
+                        Edit
+                      </button>
 
-                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-[#8D849C]">
-                        {content.description ||
-                          content.content ||
-                          "Tidak ada deskripsi."}
-                      </p>
+                      <button
+                        onClick={() => setDeleteContent(content)}
+                        className="rounded-lg border border-[#F8DADA] bg-[#FFF0F0] px-4 py-2 text-sm font-semibold text-[#D65B69] hover:bg-[#FFE1E1]"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 gap-2 md:pl-4">
-                    <button
-                      onClick={() => handleEdit(content)}
-                      className="rounded-lg border border-[#E2D5FA] bg-[#F0EAFE] px-4 py-2 text-sm font-semibold text-[#7957B7] transition hover:bg-[#E5D9FF]"
-                    >
-                      Edit
-                    </button>
+                  {/* FORUM DISKUSI */}
+                  <div className="mt-6 rounded-2xl border border-[#EAE2FA] bg-[#FCFAFF] p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-bold text-[#514568]">
+                          💬 Forum Diskusi
+                        </h3>
 
-                    <button
-                      onClick={() => setDeleteContent(content)}
-                      className="rounded-lg border border-[#F8DADA] bg-[#FFF0F0] px-4 py-2 text-sm font-semibold text-[#D65B69] transition hover:bg-[#FFE1E1]"
-                    >
-                      Delete
-                    </button>
+                        <p className="mt-1 text-xs text-[#A098AD]">
+                          Diskusi Student pada materi ini.
+                        </p>
+                      </div>
+
+                      <span className="rounded-full bg-[#F0EAFE] px-3 py-1 text-xs font-semibold text-[#7957B7]">
+                        {(comments[content.id] || []).length} Komentar
+                      </span>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {(comments[content.id] || []).map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-xl border border-[#EEE7F8] bg-white p-4"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-[#514568]">
+                              {item.username}
+                            </p>
+
+                            <span className="rounded-full bg-[#F0EAFE] px-2 py-1 text-xs text-[#7957B7]">
+                              {item.role}
+                            </span>
+                          </div>
+
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#6F667E]">
+                            {item.comment}
+                          </p>
+
+                          <p className="mt-2 text-xs text-[#A69CB5]">
+                            {new Date(item.created_at).toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                      ))}
+
+                      {(comments[content.id] || []).length === 0 && (
+                        <p className="rounded-xl bg-white p-4 text-sm text-[#A098AD]">
+                          Belum ada diskusi untuk materi ini.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* FORM BALASAN TEACHER */}
+                    <div className="mt-4 border-t border-[#EEE7F8] pt-4">
+                      <label className="mb-2 block text-sm font-semibold text-[#514568]">
+                        Tulis Balasan
+                      </label>
+
+                      <textarea
+                        value={commentInputs[content.id] || ""}
+                        onChange={(e) =>
+                          setCommentInputs((prev) => ({
+                            ...prev,
+                            [content.id]: e.target.value,
+                          }))
+                        }
+                        placeholder="Balas atau tanggapi pertanyaan Student..."
+                        rows={3}
+                        className="w-full rounded-xl border border-[#E4DDF0] bg-white p-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF]"
+                      />
+
+                      <button
+                        onClick={() => handleSendComment(content.id)}
+                        disabled={
+                          !commentInputs[content.id]?.trim() ||
+                          commentLoading === content.id
+                        }
+                        className="mt-3 rounded-xl bg-[#8967CA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#7654B8] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {commentLoading === content.id
+                          ? "Mengirim..."
+                          : "Kirim Balasan"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -485,7 +560,7 @@ export default function TeacherContents({ courseId }) {
         {/* EDIT MODAL */}
         {editContent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#241936]/40 p-4 backdrop-blur-sm">
-            <div className="my-auto w-full max-w-xl rounded-2xl border border-[#EAE2FA] bg-white p-6 shadow-2xl md:p-7">
+            <div className="my-auto w-full max-w-xl rounded-2xl border border-[#EAE2FA] bg-white p-6 shadow-2xl">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-[#30264A]">
@@ -499,7 +574,7 @@ export default function TeacherContents({ courseId }) {
                 <button
                   type="button"
                   onClick={() => setEditContent(null)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3EFFA] text-[#8068A7] transition hover:bg-[#E9DFFF]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F3EFFA] text-[#8068A7]"
                 >
                   ✕
                 </button>
@@ -514,7 +589,7 @@ export default function TeacherContents({ courseId }) {
                   <input
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF] focus:ring-4 focus:ring-[#EDE5FF]"
+                    className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm outline-none focus:border-[#A78BDF]"
                     required
                   />
                 </div>
@@ -528,7 +603,7 @@ export default function TeacherContents({ courseId }) {
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                     rows={4}
-                    className="w-full resize-y rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF] focus:ring-4 focus:ring-[#EDE5FF]"
+                    className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm outline-none focus:border-[#A78BDF]"
                   />
                 </div>
 
@@ -542,7 +617,7 @@ export default function TeacherContents({ courseId }) {
                     min="1"
                     value={editOrderIndex}
                     onChange={(e) => setEditOrderIndex(e.target.value)}
-                    className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm text-[#3F3555] outline-none focus:border-[#A78BDF] focus:ring-4 focus:ring-[#EDE5FF]"
+                    className="w-full rounded-xl border border-[#E4DDF0] bg-[#FCFBFF] px-4 py-3 text-sm outline-none focus:border-[#A78BDF]"
                     required
                   />
                 </div>
@@ -551,7 +626,7 @@ export default function TeacherContents({ courseId }) {
                   <button
                     type="button"
                     onClick={() => setEditContent(null)}
-                    className="flex-1 rounded-xl border border-[#E7E0F0] bg-white p-3 text-sm font-semibold text-[#81778F] transition hover:bg-[#F8F6FC]"
+                    className="flex-1 rounded-xl border border-[#E7E0F0] bg-white p-3 text-sm font-semibold text-[#81778F]"
                   >
                     Cancel
                   </button>
@@ -559,7 +634,7 @@ export default function TeacherContents({ courseId }) {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex-1 rounded-xl bg-[#8967CA] p-3 text-sm font-semibold text-white transition hover:bg-[#7654B8] disabled:opacity-60"
+                    className="flex-1 rounded-xl bg-[#8967CA] p-3 text-sm font-semibold text-white disabled:opacity-60"
                   >
                     {submitting ? "Saving..." : "Save Changes"}
                   </button>
@@ -593,7 +668,7 @@ export default function TeacherContents({ courseId }) {
                 <button
                   onClick={() => setDeleteContent(null)}
                   disabled={submitting}
-                  className="flex-1 rounded-xl border border-[#E7E0F0] bg-white p-3 text-sm font-semibold text-[#81778F] transition hover:bg-[#F8F6FC]"
+                  className="flex-1 rounded-xl border border-[#E7E0F0] bg-white p-3 text-sm font-semibold text-[#81778F]"
                 >
                   Cancel
                 </button>
@@ -601,7 +676,7 @@ export default function TeacherContents({ courseId }) {
                 <button
                   onClick={handleDelete}
                   disabled={submitting}
-                  className="flex-1 rounded-xl bg-[#E66D78] p-3 text-sm font-semibold text-white transition hover:bg-[#D95665] disabled:opacity-60"
+                  className="flex-1 rounded-xl bg-[#E66D78] p-3 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {submitting ? "Deleting..." : "Yes, Delete"}
                 </button>

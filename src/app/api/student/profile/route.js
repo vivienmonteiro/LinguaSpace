@@ -1,3 +1,4 @@
+
 import pool from "@/lib/db";
 import { getSession } from "@/lib/session";
 
@@ -17,6 +18,7 @@ export async function GET() {
 
     const userId = session.user.id;
 
+    // Ambil informasi akun
     const result = await pool.query(
       `
       SELECT
@@ -41,6 +43,25 @@ export async function GET() {
       );
     }
 
+    // Ambil pengajuan Teacher terbaru
+    const applicationResult = await pool.query(
+      `
+      SELECT
+        id,
+        status,
+        requested_at,
+        approved_at,
+        applicant_name,
+        language
+      FROM teacher_applications
+      WHERE user_id = $1
+      ORDER BY requested_at DESC, id DESC
+      LIMIT 1
+      `,
+      [userId]
+    );
+
+    // Hitung kursus yang diikuti
     const courseResult = await pool.query(
       `
       SELECT COUNT(*) AS total_courses
@@ -50,6 +71,7 @@ export async function GET() {
       [userId]
     );
 
+    // Hitung materi yang diselesaikan
     const contentResult = await pool.query(
       `
       SELECT COUNT(*) AS completed_contents
@@ -64,9 +86,15 @@ export async function GET() {
       success: true,
       data: {
         ...result.rows[0],
-        total_courses: courseResult.rows[0].total_courses,
+
+        teacher_application:
+          applicationResult.rows[0] || null,
+
+        total_courses:
+          Number(courseResult.rows[0].total_courses),
+
         completed_contents:
-          contentResult.rows[0].completed_contents,
+          Number(contentResult.rows[0].completed_contents),
       },
     });
   } catch (error) {
@@ -100,9 +128,7 @@ export async function PATCH(request) {
     }
 
     const userId = session.user.id;
-
     const body = await request.json();
-
     const username = body.username?.trim();
 
     if (!username) {
@@ -125,7 +151,7 @@ export async function PATCH(request) {
       );
     }
 
-    // Cek apakah username sudah digunakan
+    // Cek username duplikat
     const duplicate = await pool.query(
       `
       SELECT id
@@ -158,7 +184,7 @@ export async function PATCH(request) {
       [username, userId]
     );
 
-    // Update username di session
+    // Update username pada session
     session.user.username = result.rows[0].username;
     await session.save();
 

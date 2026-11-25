@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,31 +6,48 @@ import Link from "next/link";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
+  const [user, setUser] = useState(null);
+
   const [search, setSearch] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("All");
   const [selectedLevel, setSelectedLevel] = useState("All");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [enrollingId, setEnrollingId] = useState(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   // ==============================
-  // AMBIL DATA KURSUS DARI DATABASE
+  // AMBIL DATA USER DAN KURSUS
   // ==============================
+
   useEffect(() => {
-    async function fetchCourses() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/courses");
+        // Ambil informasi user
+        const userResponse = await fetch("/api/me");
+        const userResult = await userResponse.json();
 
-        if (!response.ok) {
+        if (userResponse.ok && userResult.success) {
+          setUser(userResult.data);
+        } else {
+          setUser(null);
+        }
+
+        // Ambil data kursus
+        const courseResponse = await fetch("/api/courses");
+
+        if (!courseResponse.ok) {
           throw new Error("Gagal mengambil data kursus");
         }
 
-        const result = await response.json();
+        const courseResult = await courseResponse.json();
 
-        if (!result.success) {
-          throw new Error(result.message);
+        if (!courseResult.success) {
+          throw new Error(courseResult.message);
         }
 
-        setCourses(result.data);
+        setCourses(courseResult.data);
       } catch (error) {
         console.error(error);
         setError("Kursus gagal dimuat. Silakan coba kembali.");
@@ -38,8 +56,66 @@ export default function CoursesPage() {
       }
     }
 
-    fetchCourses();
+    fetchData();
   }, []);
+
+  // ==============================
+  // FOLLOW COURSE
+  // ==============================
+
+  async function handleEnroll(courseId) {
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    if (user.role !== "student") {
+      return;
+    }
+
+    try {
+      setEnrollingId(courseId);
+      setActionMessage("");
+
+      const response = await fetch("/api/student/enroll", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          course_id: courseId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Gagal mengikuti kursus."
+        );
+      }
+
+      // Ambil ulang data kursus
+      const courseResponse = await fetch("/api/courses");
+      const courseResult = await courseResponse.json();
+
+      if (!courseResponse.ok || !courseResult.success) {
+        throw new Error(
+          "Pendaftaran berhasil, tetapi data kursus gagal diperbarui."
+        );
+      }
+
+      setCourses(courseResult.data);
+      setActionMessage("Berhasil mengikuti kursus!");
+    } catch (error) {
+      console.error(error);
+      setActionMessage(
+        error.message || "Terjadi kesalahan saat mengikuti kursus."
+      );
+    } finally {
+      setEnrollingId(null);
+    }
+  }
 
   // ==============================
   // DAFTAR BAHASA
@@ -67,7 +143,6 @@ export default function CoursesPage() {
     "European Portuguese": "Portugis",
   };
 
-  // Gambar lokal untuk setiap bahasa
   const courseImages = {
     English: "/images/courses/english.jpeg",
     Japanese: "/images/courses/japanese.jpeg",
@@ -79,7 +154,7 @@ export default function CoursesPage() {
     "European Portuguese": "/images/courses/portuguese.jpeg",
   };
 
-  // Menghilangkan German dari daftar
+  // Menghilangkan German
   const languages = [
     "All",
     ...new Set(
@@ -94,7 +169,12 @@ export default function CoursesPage() {
     ),
   ];
 
-  const levels = ["All", "Beginner", "Intermediate", "Advanced"];
+  const levels = [
+    "All",
+    "Beginner",
+    "Intermediate",
+    "Advanced",
+  ];
 
   // ==============================
   // FILTER KURSUS
@@ -103,7 +183,6 @@ export default function CoursesPage() {
   const filteredCourses = courses.filter((course) => {
     const category = course.category_name || "";
 
-    // Jangan tampilkan German
     const isGerman =
       category.toLowerCase().includes("german") ||
       category.toLowerCase().includes("deutsch");
@@ -123,9 +202,14 @@ export default function CoursesPage() {
 
     const matchesLevel =
       selectedLevel === "All" ||
-      course.level?.toLowerCase() === selectedLevel.toLowerCase();
+      course.level?.toLowerCase() ===
+        selectedLevel.toLowerCase();
 
-    return matchesSearch && matchesLanguage && matchesLevel;
+    return (
+      matchesSearch &&
+      matchesLanguage &&
+      matchesLevel
+    );
   });
 
   // ==============================
@@ -137,11 +221,22 @@ export default function CoursesPage() {
       name: "Instagram",
       url: "https://www.instagram.com/",
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="3" y="3" width="18" height="18" rx="5" />
           <circle cx="12" cy="12" r="4" />
-          <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" />
+          <circle
+            cx="17.5"
+            cy="6.5"
+            r="0.8"
+            fill="currentColor"
+          />
         </svg>
       ),
     },
@@ -186,25 +281,19 @@ export default function CoursesPage() {
   return (
     <main className="min-h-screen bg-[#faf9ff] text-[#30256f]">
 
-      {/* ==========================================
-          NAVBAR
-      ========================================== */}
+      {/* NAVBAR */}
 
       <nav className="sticky top-0 z-50 border-b border-purple-100 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
 
-          {/* LOGO */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-3xl">🪐</span>
-
             <span className="text-xl font-extrabold tracking-tight text-[#4933a5]">
               LinguaSpace
             </span>
           </Link>
 
-          {/* MENU */}
           <div className="hidden items-center gap-8 md:flex">
-
             <Link
               href="/"
               className="font-medium text-gray-600 transition hover:text-purple-600"
@@ -225,32 +314,41 @@ export default function CoursesPage() {
             >
               Tentang Kami
             </a>
-
           </div>
 
-          {/* LOGIN */}
-          <Link
-            href="/login"
-            className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-purple-200 transition hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            Login
-          </Link>
+          {user ? (
+            <Link
+              href={
+                user.role === "student"
+                  ? "/student"
+                  : user.role === "teacher"
+                  ? "/teacher"
+                  : "/admin"
+              }
+              className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-purple-200 transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-purple-200 transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              Login
+            </Link>
+          )}
 
         </div>
       </nav>
 
-      {/* ==========================================
-          HERO
-      ========================================== */}
+      {/* HERO */}
 
       <section className="relative overflow-hidden bg-gradient-to-r from-[#eee9ff] via-[#f8f5ff] to-[#e9e5ff] px-6 py-16 md:py-20">
 
-        {/* Dekorasi */}
         <div className="absolute -left-20 top-0 h-72 w-72 rounded-full bg-purple-200/40 blur-3xl" />
         <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-indigo-200/50 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl">
-
           <div className="max-w-3xl">
 
             <span className="inline-flex items-center rounded-full border border-purple-200 bg-white/70 px-4 py-2 text-sm font-semibold text-purple-600 shadow-sm">
@@ -294,23 +392,17 @@ export default function CoursesPage() {
               </div>
 
             </div>
-
           </div>
-
         </div>
       </section>
 
-      {/* ==========================================
-          SEARCH & FILTER
-      ========================================== */}
+      {/* SEARCH & FILTER */}
 
       <section className="mx-auto max-w-7xl px-5 py-10">
 
         <div className="rounded-3xl border border-purple-100 bg-white p-5 shadow-sm md:p-7">
 
-          {/* SEARCH */}
           <div className="relative">
-
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-purple-500">
               🔍
             </span>
@@ -322,20 +414,17 @@ export default function CoursesPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-2xl border border-purple-100 bg-[#fcfbff] py-3.5 pl-12 pr-5 text-gray-700 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
             />
-
           </div>
 
           {/* FILTER BAHASA */}
-          <div className="mt-7">
 
+          <div className="mt-7">
             <p className="mb-3 text-sm font-bold text-[#4933a5]">
               Bahasa
             </p>
 
             <div className="flex flex-wrap gap-2">
-
               {languages.map((language) => (
-
                 <button
                   key={language}
                   onClick={() => setSelectedLanguage(language)}
@@ -345,7 +434,6 @@ export default function CoursesPage() {
                       : "border-purple-100 bg-white text-gray-600 hover:border-purple-300 hover:bg-purple-50"
                   }`}
                 >
-
                   {language === "All" ? (
                     <span>✨</span>
                   ) : (
@@ -362,25 +450,20 @@ export default function CoursesPage() {
                   {language === "All"
                     ? "Semua Bahasa"
                     : languageNames[language] || language}
-
                 </button>
-
               ))}
-
             </div>
           </div>
 
           {/* FILTER LEVEL */}
-          <div className="mt-7">
 
+          <div className="mt-7">
             <p className="mb-3 text-sm font-bold text-[#4933a5]">
               Level
             </p>
 
             <div className="flex flex-wrap gap-2">
-
               {levels.map((level) => (
-
                 <button
                   key={level}
                   onClick={() => setSelectedLevel(level)}
@@ -392,22 +475,16 @@ export default function CoursesPage() {
                 >
                   {level === "All" ? "Semua Level" : level}
                 </button>
-
               ))}
-
             </div>
           </div>
-
         </div>
 
-        {/* ==========================================
-            COURSE TITLE
-        ========================================== */}
+        {/* COURSE TITLE */}
 
         <div className="mb-6 mt-10 flex flex-wrap items-end justify-between gap-3">
 
           <div>
-
             <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-600">
               ✨ Kursus Pilihan
             </span>
@@ -419,51 +496,46 @@ export default function CoursesPage() {
             <p className="mt-2 text-sm text-gray-500">
               Pilih kursus yang sesuai dengan minat dan tujuan belajarmu.
             </p>
-
           </div>
 
           <div className="rounded-full bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-600">
             {filteredCourses.length} kursus ditemukan
           </div>
-
         </div>
 
-        {/* ==========================================
-            LOADING
-        ========================================== */}
+        {/* PESAN HASIL PENDAFTARAN */}
+
+        {actionMessage && (
+          <div className="mb-5 rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm font-medium text-purple-700">
+            {actionMessage}
+          </div>
+        )}
+
+        {/* LOADING */}
 
         {loading && (
           <div className="rounded-3xl border border-purple-100 bg-white py-20 text-center shadow-sm">
-
-            <div className="mb-4 text-5xl animate-pulse">
+            <div className="mb-4 animate-pulse text-5xl">
               🪐
             </div>
 
             <p className="font-medium text-purple-600">
               Sedang memuat kursus...
             </p>
-
           </div>
         )}
 
-        {/* ==========================================
-            ERROR
-        ========================================== */}
+        {/* ERROR */}
 
         {!loading && error && (
-
           <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-600">
             {error}
           </div>
-
         )}
 
-        {/* ==========================================
-            EMPTY
-        ========================================== */}
+        {/* EMPTY */}
 
         {!loading && !error && filteredCourses.length === 0 && (
-
           <div className="rounded-3xl border border-purple-100 bg-white px-6 py-16 text-center shadow-sm">
 
             <div className="mb-4 text-6xl">
@@ -488,43 +560,35 @@ export default function CoursesPage() {
             >
               Reset Filter
             </button>
-
           </div>
-
         )}
 
-        {/* ==========================================
-            COURSE CARDS
-        ========================================== */}
+        {/* COURSE CARDS */}
 
         {!loading && !error && filteredCourses.length > 0 && (
-
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
             {filteredCourses.map((course) => {
-
               const language = course.category_name || "";
               const flag = languageIcons[language];
               const localImage = courseImages[language];
 
               return (
-
                 <article
                   key={course.id}
                   className="group overflow-hidden rounded-3xl border border-purple-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-purple-100"
                 >
 
                   {/* COURSE IMAGE */}
+
                   <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-100 to-indigo-100">
 
                     {localImage ? (
-
                       <img
                         src={localImage}
                         alt={`Ilustrasi kursus ${language}`}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         onError={(e) => {
-                          // Jika foto lokal gagal, gunakan cover database
                           if (
                             course.cover_image &&
                             e.currentTarget.src !== course.cover_image
@@ -535,32 +599,28 @@ export default function CoursesPage() {
                           }
                         }}
                       />
-
                     ) : course.cover_image ? (
-
                       <img
                         src={course.cover_image}
                         alt={course.name}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
-
                     ) : (
-
                       <div className="flex h-full items-center justify-center text-7xl">
                         🌍
                       </div>
-
                     )}
 
                     {/* LEVEL BADGE */}
+
                     <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-purple-600 shadow-sm">
                       {course.level || "All Levels"}
                     </span>
 
                     {/* FLAG */}
+
                     {flag && (
                       <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 shadow-sm">
-
                         <img
                           src={`/images/flags/${flag}.svg`}
                           alt={`Bendera ${language}`}
@@ -570,13 +630,12 @@ export default function CoursesPage() {
                         <span className="text-xs font-bold text-purple-700">
                           {language}
                         </span>
-
                       </div>
                     )}
-
                   </div>
 
                   {/* COURSE DETAILS */}
+
                   <div className="p-5">
 
                     <p className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-500">
@@ -593,53 +652,137 @@ export default function CoursesPage() {
                     </p>
 
                     {/* INFO */}
+
                     <div className="mt-5 border-t border-purple-50 pt-4">
 
-                      <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
+                      {/* TEACHER */}
 
+                      <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
                         <span className="text-purple-500">
                           👩‍🏫
                         </span>
 
                         <span>
-                          Teacher ID: {course.teacher_id ?? "Belum tersedia"}
+                          Teacher:{" "}
+                          {course.teacher_name ||
+                            `ID ${course.teacher_id ?? "Belum tersedia"}`}
                         </span>
-
                       </div>
 
-                      {/* BUTTON */}
-                      <Link
-                        href="/login"
-                        className="block rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-md shadow-purple-100 transition hover:shadow-lg hover:shadow-purple-200"
-                      >
-                        Enroll Now →
-                      </Link>
+                      {/* CONTACT TEACHER */}
+
+                      {course.teacher_email && (
+                        <a
+                          href={`mailto:${course.teacher_email}`}
+                          className="mb-4 block text-sm font-medium text-purple-600 transition hover:text-indigo-600"
+                        >
+                          ✉️ Hubungi Teacher
+                        </a>
+                      )}
+
+                      {/* STUDENT SUDAH ENROLL */}
+
+                      {user?.role === "student" &&
+                      course.is_enrolled ? (
+                        <div>
+
+                          <div className="mb-3">
+
+                            <div className="mb-2 flex items-center justify-between text-xs font-semibold">
+                              <span className="text-gray-500">
+                                Progress Belajar
+                              </span>
+
+                              <span className="text-purple-600">
+                                {Number(course.progress) || 0}%
+                              </span>
+                            </div>
+
+                            <div className="h-2.5 overflow-hidden rounded-full bg-purple-100">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 transition-all"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    Math.max(
+                                      0,
+                                      Number(course.progress) || 0
+                                    )
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+
+                            <p className="mt-2 text-xs text-gray-400">
+                              {course.completed_contents || 0} dari{" "}
+                              {course.total_contents || 0} materi selesai
+                            </p>
+                          </div>
+
+                          <Link
+                            href={`/student/learn/${course.id}`}
+                            className="block rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-md shadow-purple-100 transition hover:shadow-lg hover:shadow-purple-200"
+                          >
+                            {Number(course.progress) >= 100
+                              ? "Lihat Kembali Kursus →"
+                              : "Lanjutkan Belajar →"}
+                          </Link>
+
+                        </div>
+
+                      ) : user?.role === "student" ? (
+
+                        /* STUDENT BELUM ENROLL */
+
+                        <button
+                          onClick={() => handleEnroll(course.id)}
+                          disabled={enrollingId === course.id}
+                          className="block w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-md shadow-purple-100 transition hover:shadow-lg hover:shadow-purple-200 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {enrollingId === course.id
+                            ? "Memproses..."
+                            : "Follow Course →"}
+                        </button>
+
+                      ) : !user ? (
+
+                        /* PENGUNJUNG BELUM LOGIN */
+
+                        <Link
+                          href="/login"
+                          className="block rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-center text-sm font-bold text-white shadow-md shadow-purple-100 transition hover:shadow-lg hover:shadow-purple-200"
+                        >
+                          Login untuk Mengikuti →
+                        </Link>
+
+                      ) : (
+
+                        /* TEACHER / ADMIN */
+
+                        <div className="rounded-xl bg-purple-50 py-3 text-center text-sm font-semibold text-purple-600">
+                          {user.role === "teacher"
+                            ? "Mode Teacher"
+                            : "Mode Admin"}
+                        </div>
+
+                      )}
 
                     </div>
-
                   </div>
-
                 </article>
-
               );
-
             })}
 
           </div>
-
         )}
-
       </section>
 
-      {/* ==========================================
-          CTA
-      ========================================== */}
+      {/* CTA */}
 
       <section className="mx-5 mb-16 overflow-hidden rounded-3xl bg-gradient-to-r from-[#7250ed] via-[#8967f5] to-[#a28aff] md:mx-auto md:max-w-7xl">
 
         <div className="relative px-7 py-12 md:px-14 md:py-14">
 
-          {/* Dekorasi */}
           <div className="absolute -right-10 -top-20 h-56 w-56 rounded-full bg-white/10" />
           <div className="absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-white/10" />
 
@@ -674,22 +817,16 @@ export default function CoursesPage() {
             </div>
 
           </div>
-
         </div>
-
       </section>
 
-      {/* ==========================================
-          FOOTER
-          TENTANG KAMI LANGSUNG MENUJU BAGIAN INI
-      ========================================== */}
+      {/* FOOTER */}
 
       <footer
         id="footer"
         className="relative scroll-mt-20 overflow-hidden border-t border-purple-100 bg-gradient-to-r from-[#f0ecff] via-[#faf9ff] to-[#f0ecff]"
       >
 
-        {/* Dekorasi */}
         <div className="pointer-events-none absolute -left-16 -top-16 h-44 w-44 rounded-full border-[20px] border-purple-100/60" />
         <div className="pointer-events-none absolute -right-12 -bottom-20 h-48 w-48 rounded-full bg-purple-100/50" />
 
@@ -697,7 +834,8 @@ export default function CoursesPage() {
 
           <div className="flex flex-col items-center justify-between gap-7 md:flex-row">
 
-            {/* LOGO + TAGLINE */}
+            {/* LOGO */}
+
             <Link href="/" className="flex items-center gap-3">
 
               <span className="text-4xl">
@@ -705,7 +843,6 @@ export default function CoursesPage() {
               </span>
 
               <div>
-
                 <h2 className="text-xl font-extrabold text-[#4933a5]">
                   LinguaSpace
                 </h2>
@@ -713,16 +850,15 @@ export default function CoursesPage() {
                 <p className="mt-1 text-xs tracking-wide text-gray-500">
                   Learn · Connect · Grow
                 </p>
-
               </div>
 
             </Link>
 
             {/* SOCIAL MEDIA */}
+
             <div className="flex items-center gap-4">
 
               {socialMedia.map((social) => (
-
                 <a
                   key={social.name}
                   href={social.url}
@@ -732,30 +868,24 @@ export default function CoursesPage() {
                   title={social.name}
                   className="flex h-10 w-10 items-center justify-center rounded-xl text-[#4933a5] transition hover:-translate-y-1 hover:bg-purple-100 hover:text-purple-700"
                 >
-
                   <span className="h-5 w-5">
                     {social.icon}
                   </span>
-
                 </a>
-
               ))}
 
             </div>
-
           </div>
 
           {/* COPYRIGHT */}
-          <div className="mt-7 border-t border-purple-100 pt-5 text-center">
 
+          <div className="mt-7 border-t border-purple-100 pt-5 text-center">
             <p className="text-xs text-gray-500">
               © 2026 LinguaSpace. All rights reserved.
             </p>
-
           </div>
 
         </div>
-
       </footer>
 
     </main>

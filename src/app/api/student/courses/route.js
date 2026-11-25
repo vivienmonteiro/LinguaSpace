@@ -6,10 +6,28 @@ import { getSession } from "@/lib/session";
 export async function GET() {
   try {
     const session = await getSession();
-    const studentId =
-      session.user && session.user.role === "student"
-        ? session.user.id
-        : null;
+
+    if (!session.user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Silakan login terlebih dahulu.",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== "student") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Akses hanya untuk Student.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const studentId = session.user.id;
 
     const result = await pool.query(
       `SELECT
@@ -57,7 +75,6 @@ export async function GET() {
       success: true,
       data: courses,
     });
-
   } catch (error) {
     console.error("Student courses error:", error);
 

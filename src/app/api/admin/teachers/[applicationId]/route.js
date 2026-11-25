@@ -1,9 +1,11 @@
+
 import pool from "@/lib/db";
 import { getSession } from "@/lib/session";
 
 export async function PATCH(request, { params }) {
   const session = await getSession();
 
+  // Memeriksa akses Admin
   if (!session.user || session.user.role !== "admin") {
     return Response.json(
       { success: false, message: "Akses ditolak." },
@@ -11,12 +13,22 @@ export async function PATCH(request, { params }) {
     );
   }
 
-  const { applicationId } = await params;
-
   try {
+    const { applicationId } = await params;
+    const id = Number(applicationId);
+
+    // Validasi ID pengajuan
+    if (!Number.isInteger(id) || id <= 0) {
+      return Response.json(
+        { success: false, message: "ID pengajuan tidak valid." },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const status = body.status;
 
+    // Validasi status
     if (!["approved", "rejected"].includes(status)) {
       return Response.json(
         { success: false, message: "Status tidak valid." },
@@ -29,12 +41,13 @@ export async function PATCH(request, { params }) {
     try {
       await client.query("BEGIN");
 
+      // Mengambil data pengajuan
       const application = await client.query(
         `SELECT id, user_id, status
          FROM teacher_applications
          WHERE id = $1
          FOR UPDATE`,
-        [applicationId]
+        [id]
       );
 
       if (application.rows.length === 0) {
@@ -46,6 +59,7 @@ export async function PATCH(request, { params }) {
         );
       }
 
+      // Memastikan pengajuan belum pernah ditinjau
       if (application.rows[0].status !== "pending") {
         await client.query("ROLLBACK");
 
@@ -61,6 +75,7 @@ export async function PATCH(request, { params }) {
       const userId = application.rows[0].user_id;
       const isApproved = status === "approved";
 
+      // Memperbarui status pengajuan
       await client.query(
         `UPDATE teacher_applications
          SET status = $1,
@@ -71,11 +86,12 @@ export async function PATCH(request, { params }) {
         [
           status,
           session.user.id,
-          applicationId,
+          id,
           isApproved ? new Date() : null,
         ]
       );
 
+      // Jika disetujui, ubah role pengguna menjadi Teacher
       if (isApproved) {
         await client.query(
           `UPDATE users
@@ -103,7 +119,6 @@ export async function PATCH(request, { params }) {
         {
           success: false,
           message: "Gagal memproses pengajuan.",
-          details: error.message,
         },
         { status: 500 }
       );
@@ -117,7 +132,6 @@ export async function PATCH(request, { params }) {
       {
         success: false,
         message: "Terjadi kesalahan pada server.",
-        details: error.message,
       },
       { status: 500 }
     );
