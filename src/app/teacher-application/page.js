@@ -10,11 +10,13 @@ export default function TeacherApplicationPage() {
   const [experience, setExperience] = useState("");
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleApplication(e) {
     e.preventDefault();
     setMessage("");
+    setSuccess(false);
     setLoading(true);
 
     try {
@@ -38,13 +40,14 @@ export default function TeacherApplicationPage() {
         return;
       }
 
+      setSuccess(true);
       setMessage(result.message || "Aplikasi berhasil dikirim!");
 
       setName("");
       setLanguage("");
       setExperience("");
       setDescription("");
-    } catch (error) {
+    } catch {
       setMessage("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setLoading(false);
@@ -52,39 +55,88 @@ export default function TeacherApplicationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between bg-white px-8 py-5 shadow-sm">
-        <Link href="/" className="text-2xl font-bold text-indigo-600">
-          LinguaSpace
-        </Link>
+    <main className="min-h-screen bg-[#f7f6ff]">
 
-        <Link href="/login" className="text-gray-700 hover:text-indigo-600">
-          Login
-        </Link>
+      {/* ================= NAVBAR ================= */}
+      <nav className="sticky top-0 z-20 border-b border-purple-100 bg-white/95 px-5 py-4 shadow-sm backdrop-blur md:px-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 text-2xl font-extrabold text-violet-700"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-xl text-white">
+              🪐
+            </span>
+
+            LinguaSpace
+          </Link>
+
+          <Link
+            href="/dashboard"
+            className="rounded-xl px-4 py-2 font-semibold text-violet-700 transition hover:bg-purple-50"
+          >
+            ← Dashboard
+          </Link>
+
+        </div>
       </nav>
 
-      <section className="mx-auto max-w-3xl px-6 py-12">
-        <div className="rounded-3xl bg-white p-8 shadow-sm md:p-10">
+      {/* ================= MAIN CONTENT ================= */}
+      <section className="mx-auto max-w-6xl px-5 py-10 md:py-12">
 
-          <p className="font-semibold text-indigo-600">
-            BECOME A TEACHER
-          </p>
+        {/* ================= PURPLE BANNER ================= */}
+        <div className="mx-auto mb-8 w-full max-w-4xl overflow-hidden rounded-[20px] bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 p-4 text-white shadow-lg md:p-5">
+          <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
 
-          <h1 className="mt-3 text-3xl font-bold text-gray-900">
-            Teacher Application
-          </h1>
+            <div>
+              <span className="inline-block rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-bold tracking-widest">
+                BECOME A TEACHER
+              </span>
 
-          <p className="mt-3 leading-7 text-gray-700">
-            Share your language skills with other learners.
-            Submit your application and wait for the Admin approval.
-          </p>
+              <h1 className="mt-5 text-3xl font-extrabold leading-tight md:text-5xl">
+                Share Your Knowledge,
+                <br />
+                Inspire the World!
+              </h1>
 
-          <form onSubmit={handleApplication} className="mt-8 space-y-6">
+              <p className="mt-4 max-w-2xl leading-7 text-purple-100">
+                Jadilah bagian dari komunitas pengajar LinguaSpace.
+                Bagikan kemampuan bahasamu dan bantu orang lain
+                mengembangkan keterampilan mereka.
+              </p>
+            </div>
+
+            <div className="hidden h-40 w-40 items-center justify-center rounded-[35px] border border-white/20 bg-white/10 text-8xl shadow-inner md:flex">
+              👩🏻‍🏫
+            </div>
+
+          </div>
+        </div>
+
+        {/* ================= TEACHER APPLICATION FORM ================= */}
+        <section className="mx-auto max-w-4xl rounded-3xl border border-purple-100 bg-white p-6 shadow-sm md:p-9">
+
+          <div className="mb-7">
+            <p className="text-sm font-bold tracking-widest text-violet-600">
+              TEACHER REGISTRATION
+            </p>
+
+            <h2 className="mt-2 text-2xl font-extrabold text-[#30245c] md:text-3xl">
+              Teacher Application Form
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Lengkapi informasi berikut untuk mengajukan diri menjadi
+              pengajar di LinguaSpace.
+            </p>
+          </div>
+
+          <form onSubmit={handleApplication} className="space-y-5">
 
             {/* Full Name */}
             <div>
-              <label className="mb-2 block font-medium text-gray-800">
+              <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Full Name
               </label>
 
@@ -94,13 +146,13 @@ export default function TeacherApplicationPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your full name"
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-purple-100 bg-[#fcfbff] px-4 py-3 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-purple-100"
               />
             </div>
 
             {/* Language */}
             <div>
-              <label className="mb-2 block font-medium text-gray-800">
+              <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Language You Want to Teach
               </label>
 
@@ -108,7 +160,7 @@ export default function TeacherApplicationPage() {
                 required
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-purple-100 bg-[#fcfbff] px-4 py-3 text-gray-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-purple-100"
               >
                 <option value="" disabled>
                   Select language
@@ -126,7 +178,7 @@ export default function TeacherApplicationPage() {
 
             {/* Teaching Experience */}
             <div>
-              <label className="mb-2 block font-medium text-gray-800">
+              <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Teaching Experience
               </label>
 
@@ -136,13 +188,13 @@ export default function TeacherApplicationPage() {
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
                 placeholder="Example: 2 years of teaching experience"
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-purple-100 bg-[#fcfbff] px-4 py-3 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-purple-100"
               />
             </div>
 
             {/* Application Description */}
             <div>
-              <label className="mb-2 block font-medium text-gray-800">
+              <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Application Description
               </label>
 
@@ -152,19 +204,31 @@ export default function TeacherApplicationPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tell us about yourself and why you want to become a teacher..."
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                className="w-full resize-y rounded-xl border border-purple-100 bg-[#fcfbff] px-4 py-3 text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-purple-100"
               />
             </div>
 
-            {/* Information */}
-            <div className="rounded-xl bg-yellow-50 p-4 text-sm leading-6 text-yellow-900">
-              Your application will be reviewed by the Admin.
-              You will become a Teacher after your application is approved.
+            {/* Notification */}
+            <div className="rounded-2xl border border-purple-100 bg-purple-50 p-4 text-sm leading-6 text-purple-900">
+              <div className="flex items-start gap-3">
+                <span className="text-xl">🔔</span>
+
+                <p>
+                  Your application will be reviewed by the Admin.
+                  You will become a Teacher after your application is approved.
+                </p>
+              </div>
             </div>
 
-            {/* Message */}
+            {/* Success / Error Message */}
             {message && (
-              <div className="rounded-xl bg-indigo-50 p-4 text-sm text-indigo-900">
+              <div
+                className={`rounded-xl border p-4 text-sm font-medium ${
+                  success
+                    ? "border-green-200 bg-green-50 text-green-700"
+                    : "border-red-200 bg-red-50 text-red-700"
+                }`}
+              >
                 {message}
               </div>
             )}
@@ -173,22 +237,21 @@ export default function TeacherApplicationPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-purple-700 py-4 font-bold text-white shadow-lg shadow-purple-200 transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Submitting..." : "Submit Application"}
+              {loading
+                ? "Submitting Application..."
+                : "Submit Application →"}
             </button>
 
           </form>
+        </section>
 
-          {/* Back to Home */}
-          <Link
-            href="/"
-            className="mt-6 block text-center text-gray-600 hover:text-indigo-600"
-          >
-            ← Back to Home
-          </Link>
+        {/* ================= FOOTER ================= */}
+        <footer className="py-9 text-center text-sm text-violet-400">
+          © 2026 LinguaSpace · Keep learning, keep growing 💜
+        </footer>
 
-        </div>
       </section>
     </main>
   );

@@ -8,209 +8,230 @@ export default function StudentCoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [enrollingId, setEnrollingId] = useState(null);
 
   useEffect(() => {
-    async function loadCourses() {
+    async function loadMyCourses() {
       try {
         const response = await fetch("/api/student/courses");
         const result = await response.json();
 
-        if (result.success) {
-          setCourses(result.data);
-        } else {
-          setError(result.message || "Gagal mengambil kursus.");
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Gagal mengambil data kursus.");
         }
+
+        // Hanya mengambil kursus yang sudah diikuti siswa
+        const enrolled = (result.data || []).filter(
+          (course) => course.is_enrolled
+        );
+
+        // Mengambil progres belajar setiap kursus
+        const coursesWithProgress = await Promise.all(
+          enrolled.map(async (course) => {
+            try {
+              const progressResponse = await fetch(
+                `/api/student/learn?course_id=${course.id}`
+              );
+              const progressResult = await progressResponse.json();
+
+              return {
+                ...course,
+                progress: progressResult.data?.progress || {},
+              };
+            } catch {
+              return { ...course, progress: {} };
+            }
+          })
+        );
+
+        setCourses(coursesWithProgress);
       } catch (err) {
-        setError("Tidak dapat terhubung ke server.");
+        setError(err.message || "Terjadi kesalahan.");
       } finally {
         setLoading(false);
       }
     }
 
-    loadCourses();
+    loadMyCourses();
   }, []);
 
-  async function handleEnroll(courseId) {
-    setMessage("");
-    setEnrollingId(courseId);
+  function getProgress(course) {
+    const progress = course.progress || {};
+    const total =
+      Number(progress.total_contents ?? course.total_contents ?? 0);
+    const completed = Number(progress.completed_contents ?? 0);
 
-    try {
-      const response = await fetch("/api/student/enroll", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          course_id: courseId,
-        }),
-      });
+    const percentage =
+      progress.percentage !== undefined
+        ? Number(progress.percentage)
+        : total > 0
+          ? Math.round((completed / total) * 100)
+          : 0;
 
-      const result = await response.json();
-
-      if (result.success) {
-        setCourses((previousCourses) =>
-          previousCourses.map((course) =>
-            course.id === courseId
-              ? { ...course, is_enrolled: true }
-              : course
-          )
-        );
-
-        setMessage(result.message);
-      } else {
-        setMessage(result.message || "Gagal mendaftar kursus.");
-      }
-    } catch (err) {
-      setMessage("Terjadi kesalahan saat mendaftar.");
-    } finally {
-      setEnrollingId(null);
-    }
+    return {
+      total,
+      completed,
+      percentage: Math.min(100, Math.max(0, percentage)),
+      finished: total > 0 && completed >= total,
+    };
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-
-      {/* Navbar */}
-      <nav className="bg-white shadow-sm px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-600">
+    <div className="min-h-screen bg-[#f7f6ff]">
+      <header className="bg-white border-b border-purple-100 px-6 py-5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="text-2xl font-extrabold text-[#393779]"
+          >
             LinguaSpace
-          </h1>
+          </Link>
 
           <Link
-            href="/student/dashboard"
-            className="text-blue-600 font-medium hover:text-blue-800"
+            href="/dashboard"
+            className="text-sm font-semibold text-purple-700 hover:text-purple-900"
           >
-            Back to Dashboard
+            ← Kembali ke Dashboard
           </Link>
         </div>
-      </nav>
+      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-6 md:p-10">
-
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">
-            Course Catalog
-          </h2>
-
-          <p className="text-gray-600 mt-2">
-            Explore berbagai kursus bahasa dan mulai perjalanan belajarmu.
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        <div className="rounded-3xl bg-gradient-to-r from-violet-600 to-purple-800 p-8 md:p-10 text-white shadow-lg mb-9">
+          <p className="text-purple-100 text-sm font-semibold mb-2">
+            STUDENT LEARNING AREA
+          </p>
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-3">
+            Kursus Saya
+          </h1>
+          <p className="text-purple-100 max-w-2xl">
+            Semua kursus yang sudah kamu ikuti ada di sini. Lanjutkan
+            perjalanan belajarmu dan tingkatkan kemampuan bahasamu!
           </p>
         </div>
 
-        {/* Message */}
-        {message && (
-          <div className="bg-green-100 text-green-800 p-4 rounded-lg mb-6">
-            {message}
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-7">
+          <div>
+            <h2 className="text-2xl font-bold text-[#25245b]">
+              Kursus yang Diikuti
+            </h2>
+            <p className="text-gray-500 mt-1">
+              {courses.length} kursus terdaftar
+            </p>
+          </div>
+
+          <Link
+            href="/student/explore"
+            className="self-start rounded-xl bg-gradient-to-r from-violet-500 to-purple-700 px-5 py-3 text-white font-bold shadow-md hover:shadow-lg transition"
+          >
+            + Jelajahi Kursus
+          </Link>
+        </div>
+
+        {loading && (
+          <div className="text-center py-20 text-purple-700 font-semibold">
+            Memuat kursus kamu...
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <div className="bg-red-100 text-red-800 p-4 rounded-lg mb-6">
+        {!loading && error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-5 text-red-600">
             {error}
           </div>
         )}
 
-        {/* Loading */}
-        {loading && (
-          <div className="bg-white rounded-xl p-8 text-center">
-            <p className="text-gray-600">
-              Loading courses...
-            </p>
-          </div>
-        )}
-
-        {/* Empty */}
         {!loading && !error && courses.length === 0 && (
-          <div className="bg-white rounded-xl p-8 text-center">
-            <p className="text-gray-600">
-              Belum ada kursus tersedia.
+          <div className="bg-white rounded-3xl border border-purple-100 p-10 text-center shadow-sm">
+            <div className="text-6xl mb-5">📚</div>
+            <h3 className="text-xl font-bold text-[#25245b] mb-2">
+              Kamu Belum Mengikuti Kursus
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Yuk, temukan kursus bahasa yang ingin kamu pelajari!
             </p>
+            <Link
+              href="/student/explore"
+              className="inline-block rounded-xl bg-gradient-to-r from-violet-500 to-purple-700 px-6 py-3 text-white font-bold"
+            >
+              Explore Courses
+            </Link>
           </div>
         )}
 
-        {/* Course List */}
         {!loading && !error && courses.length > 0 && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {courses.map((course) => {
+              const progress = getProgress(course);
 
-            {courses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition"
-              >
+              return (
+                <div
+                  key={course.id}
+                  className="bg-white rounded-3xl overflow-hidden border border-purple-100 shadow-sm hover:shadow-lg transition"
+                >
+                  <div className="h-3 bg-gradient-to-r from-violet-500 to-purple-700" />
 
-                {/* Card Header */}
-                <div className="bg-blue-600 p-5">
-                  <span className="inline-block bg-white text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-                    {course.category_name || "General"}
-                  </span>
+                  <div className="p-6">
+                    <div className="flex justify-between items-center gap-3 mb-4">
+                      <span className="text-xs font-bold bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full">
+                        {course.category_name || "Language"}
+                      </span>
+                      <span className="text-xs font-semibold text-gray-500">
+                        {course.level || "Beginner"}
+                      </span>
+                    </div>
 
-                  <h3 className="text-xl font-bold text-white">
-                    {course.name}
-                  </h3>
-                </div>
+                    <h3 className="text-xl font-extrabold text-[#25245b] mb-2">
+                      {course.name}
+                    </h3>
 
-                {/* Card Body */}
-                <div className="p-5">
-
-                  <p className="text-gray-600 text-sm leading-6 min-h-[72px]">
-                    {course.description || "Belum ada deskripsi kursus."}
-                  </p>
-
-                  <div className="mt-4 space-y-2">
-
-                    <p className="text-gray-700 text-sm">
-                      <span className="font-semibold">Teacher:</span>{" "}
-                      {course.teacher_name || "-"}
+                    <p className="text-sm text-gray-500 line-clamp-3 min-h-[60px]">
+                      {course.description || "Belajar bahasa bersama LinguaSpace."}
                     </p>
 
-                    <p className="text-gray-700 text-sm">
-                      <span className="font-semibold">Level:</span>{" "}
-                      {course.level || "-"}
-                    </p>
+                    <div className="mt-5 space-y-2 text-sm text-gray-600">
+                      <p>👨‍🏫 Teacher: {course.teacher_name || "-"}</p>
+                      <p>📖 Total materi: {progress.total}</p>
+                    </div>
 
-                    <p className="text-gray-700 text-sm">
-                      <span className="font-semibold">Learning Materials:</span>{" "}
-                      {course.total_contents}
-                    </p>
+                    <div className="mt-6">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="font-semibold text-[#393779]">
+                          Progress Belajar
+                        </span>
+                        <span className="font-bold text-purple-700">
+                          {progress.percentage}%
+                        </span>
+                      </div>
 
-                  </div>
+                      <div className="w-full h-3 bg-purple-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-violet-500 to-purple-700 rounded-full transition-all"
+                          style={{ width: `${progress.percentage}%` }}
+                        />
+                      </div>
 
-                  {/* Enrollment Button */}
-                  <div className="mt-5">
+                      <p className="text-xs text-gray-500 mt-2">
+                        {progress.completed} dari {progress.total} materi selesai
+                      </p>
+                    </div>
 
-                    {course.is_enrolled ? (
-                      <Link
-                        href="/student/dashboard"
-                        className="block bg-green-100 text-green-800 text-center py-3 px-4 rounded-lg font-semibold"
-                      >
-                        Enrolled ✓
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={() => handleEnroll(course.id)}
-                        disabled={enrollingId === course.id}
-                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-                      >
-                        {enrollingId === course.id
-                          ? "Enrolling..."
-                          : "Enroll Now"}
-                      </button>
+                    {progress.finished && (
+                      <div className="mt-4 text-sm font-bold text-green-700 bg-green-50 rounded-xl p-3">
+                        ✓ Semua materi telah diselesaikan!
+                      </div>
                     )}
 
+                    <Link
+                      href={`/student/learn/${course.id}`}
+                      className="block text-center mt-6 rounded-xl bg-gradient-to-r from-violet-500 to-purple-700 px-5 py-3 text-white font-bold hover:shadow-md transition"
+                    >
+                      {progress.finished ? "Lihat Kembali Materi" : "Lanjutkan Belajar"}
+                    </Link>
                   </div>
-
                 </div>
-              </div>
-            ))}
-
+              );
+            })}
           </div>
         )}
-
       </main>
     </div>
   );
