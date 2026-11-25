@@ -13,9 +13,7 @@ export default function StudentProfilePage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
 
-  // =========================
   // FETCH PROFILE
-  // =========================
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -41,12 +39,9 @@ export default function StudentProfilePage() {
     fetchProfile();
   }, []);
 
-  // =========================
   // UPDATE PROFILE
-  // =========================
   async function handleSave(e) {
     e.preventDefault();
-
     setSaving(true);
     setMessage("");
 
@@ -84,18 +79,14 @@ export default function StudentProfilePage() {
     }
   }
 
-  // =========================
   // CANCEL EDIT
-  // =========================
   function handleCancel() {
     setUsername(profile.username);
     setEditing(false);
     setMessage("");
   }
 
-  // =========================
   // FORMAT DATE
-  // =========================
   function formatDate(date) {
     if (!date) return "-";
 
@@ -106,9 +97,6 @@ export default function StudentProfilePage() {
     });
   }
 
-  // =========================
-  // LOADING
-  // =========================
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8f7fc]">
@@ -117,9 +105,6 @@ export default function StudentProfilePage() {
     );
   }
 
-  // =========================
-  // PROFILE NOT FOUND
-  // =========================
   if (!profile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8f7fc] px-5">
@@ -169,44 +154,49 @@ export default function StudentProfilePage() {
         </header>
 
         {/* PROFILE CARD */}
-        <section className="mb-6 overflow-hidden rounded-3xl border border-purple-100 bg-white shadow-sm">
+        <section className="relative mb-6 overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-100 via-purple-50 to-indigo-100 shadow-sm">
 
-          <div className="relative h-36 overflow-hidden bg-gradient-to-r from-violet-200 via-purple-100 to-indigo-100">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/30" />
-            <div className="absolute bottom-0 left-32 h-24 w-24 rounded-full bg-white/20" />
-            <div className="absolute -bottom-10 right-40 h-28 w-28 rounded-full bg-purple-200/30" />
-          </div>
+          <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-white/40" />
+          <div className="pointer-events-none absolute right-40 top-24 h-24 w-24 rounded-full bg-violet-200/40" />
+          <div className="pointer-events-none absolute -bottom-20 -left-12 h-48 w-48 rounded-full bg-indigo-200/30" />
 
-          <div className="px-6 pb-7 md:px-9">
-            <div className="-mt-12 flex flex-wrap items-end justify-between gap-4">
+          {/* EDIT BUTTON */}
+          {!editing && (
+            <button
+              type="button"
+              onClick={() => {
+                setUsername(profile.username);
+                setMessage("");
+                setEditing(true);
+              }}
+              className="absolute right-6 top-6 z-20 cursor-pointer rounded-xl border border-violet-200 bg-violet-100 px-4 py-2.5 text-sm font-semibold text-violet-800 shadow-sm transition hover:bg-violet-200"
+            >
+              ✏️ Edit Profil
+            </button>
+          )}
 
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-violet-500 text-4xl font-extrabold text-white shadow-sm">
-                {initial}
-              </div>
+          <div className="relative z-10 flex flex-col gap-5 p-7 md:flex-row md:items-center md:p-9">
 
-              {!editing && (
-                <button
-                  onClick={() => {
-                    setEditing(true);
-                    setMessage("");
-                  }}
-                  className="rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-600 transition hover:bg-violet-50"
-                >
-                  ✏️ Edit Profil
-                </button>
-              )}
+            {/* AVATAR */}
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-3xl border-4 border-white bg-gradient-to-br from-violet-600 to-indigo-600 text-4xl font-extrabold text-white shadow-lg">
+              {initial}
             </div>
 
-            <div className="mt-4">
-              <h2 className="text-2xl font-extrabold text-gray-800">
+            {/* USER INFORMATION */}
+            <div className="min-w-0">
+              <p className="mb-1 text-sm font-semibold tracking-wide text-violet-600">
+                MY PROFILE
+              </p>
+
+              <h2 className="break-words text-2xl font-extrabold text-gray-800 md:text-3xl">
                 {profile.username}
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Student LinguaSpace
+              <p className="mt-1 text-sm text-gray-600">
+                Selamat datang di LinguaSpace!
               </p>
 
-              <span className="mt-3 inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-600">
+              <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-4 py-1.5 text-xs font-bold text-violet-700">
                 🎓 Student
               </span>
             </div>
@@ -271,15 +261,17 @@ export default function StudentProfilePage() {
 
         {/* EDIT FORM */}
         {editing && (
-          <section className="mb-6 rounded-2xl border border-purple-100 bg-white p-6 shadow-sm">
-            <h2 className="mb-5 text-lg font-bold text-gray-800">
+          <section className="mb-6 rounded-2xl border border-purple-100 bg-white p-6 text-gray-900 shadow-sm">
+
+            <h2 className="mb-5 text-lg font-bold text-gray-900">
               Edit Informasi Profil
             </h2>
 
             <form onSubmit={handleSave} className="space-y-5">
 
+              {/* USERNAME */}
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                <label className="mb-2 block text-sm font-semibold text-gray-900">
                   Username
                 </label>
 
@@ -290,49 +282,52 @@ export default function StudentProfilePage() {
                   minLength={3}
                   maxLength={30}
                   required
-                  className="w-full rounded-xl border border-purple-100 px-4 py-3 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                  className="w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                   placeholder="Masukkan username"
                 />
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600">
                   Username harus terdiri dari 3–30 karakter.
                 </p>
               </div>
 
+              {/* EMAIL */}
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                <label className="mb-2 block text-sm font-semibold text-gray-900">
                   Email
                 </label>
 
                 <input
                   type="email"
-                  value={profile.email}
+                  value={profile.email || ""}
                   disabled
-                  className="w-full cursor-not-allowed rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-gray-400"
+                  className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-800"
                 />
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600">
                   Email tidak dapat diubah.
                 </p>
               </div>
 
+              {/* MESSAGE */}
               {message && (
                 <div
                   className={`rounded-xl px-4 py-3 text-sm ${
                     messageType === "success"
-                      ? "bg-green-50 text-green-600"
-                      : "bg-red-50 text-red-600"
+                      ? "bg-green-50 text-green-800"
+                      : "bg-red-50 text-red-800"
                   }`}
                 >
                   {message}
                 </div>
               )}
 
+              {/* BUTTONS */}
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50"
+                  className="rounded-xl border border-violet-200 bg-violet-100 px-5 py-3 text-sm font-bold text-violet-900 transition hover:bg-violet-200 disabled:opacity-50"
                 >
                   {saving ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
@@ -341,7 +336,7 @@ export default function StudentProfilePage() {
                   type="button"
                   onClick={handleCancel}
                   disabled={saving}
-                  className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-500 transition hover:bg-gray-50"
+                  className="rounded-xl border border-gray-200 bg-gray-100 px-5 py-3 text-sm font-semibold text-gray-900 transition hover:bg-gray-200"
                 >
                   Batal
                 </button>
@@ -355,8 +350,8 @@ export default function StudentProfilePage() {
           <div
             className={`mb-6 rounded-xl px-4 py-3 text-sm ${
               messageType === "success"
-                ? "bg-green-50 text-green-600"
-                : "bg-red-50 text-red-600"
+                ? "bg-green-50 text-green-800"
+                : "bg-red-50 text-red-800"
             }`}
           >
             {message}
@@ -370,15 +365,14 @@ export default function StudentProfilePage() {
           </h2>
 
           <div className="space-y-4">
-
             <div className="flex items-center gap-4 rounded-xl bg-purple-50/50 p-4">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-xl">
                 👤
               </div>
 
               <div>
-                <p className="text-xs text-gray-400">Username</p>
-                <p className="mt-1 font-semibold text-gray-700">
+                <p className="text-xs text-gray-500">Username</p>
+                <p className="mt-1 font-semibold text-gray-800">
                   {profile.username}
                 </p>
               </div>
@@ -390,8 +384,8 @@ export default function StudentProfilePage() {
               </div>
 
               <div>
-                <p className="text-xs text-gray-400">Email</p>
-                <p className="mt-1 break-all font-semibold text-gray-700">
+                <p className="text-xs text-gray-500">Email</p>
+                <p className="mt-1 break-all font-semibold text-gray-800">
                   {profile.email}
                 </p>
               </div>
@@ -403,8 +397,8 @@ export default function StudentProfilePage() {
               </div>
 
               <div>
-                <p className="text-xs text-gray-400">Role</p>
-                <p className="mt-1 font-semibold text-gray-700">
+                <p className="text-xs text-gray-500">Role</p>
+                <p className="mt-1 font-semibold text-gray-800">
                   Student
                 </p>
               </div>
@@ -416,13 +410,12 @@ export default function StudentProfilePage() {
               </div>
 
               <div>
-                <p className="text-xs text-gray-400">Bergabung Sejak</p>
-                <p className="mt-1 font-semibold text-gray-700">
+                <p className="text-xs text-gray-500">Bergabung Sejak</p>
+                <p className="mt-1 font-semibold text-gray-800">
                   {formatDate(profile.created_at)}
                 </p>
               </div>
             </div>
-
           </div>
         </section>
 
@@ -433,15 +426,12 @@ export default function StudentProfilePage() {
           </h2>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-
             <div className="rounded-2xl border border-purple-100 bg-white p-5 shadow-sm">
               <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-xl">
                 📚
               </div>
 
-              <p className="text-sm text-gray-500">
-                Kursus Diikuti
-              </p>
+              <p className="text-sm text-gray-600">Kursus Diikuti</p>
 
               <p className="mt-1 text-3xl font-extrabold text-violet-700">
                 {profile.total_courses || 0}
@@ -453,15 +443,12 @@ export default function StudentProfilePage() {
                 ✅
               </div>
 
-              <p className="text-sm text-gray-500">
-                Materi Selesai
-              </p>
+              <p className="text-sm text-gray-600">Materi Selesai</p>
 
-              <p className="mt-1 text-3xl font-extrabold text-green-600">
+              <p className="mt-1 text-3xl font-extrabold text-green-700">
                 {profile.completed_contents || 0}
               </p>
             </div>
-
           </div>
         </section>
 
@@ -480,7 +467,7 @@ export default function StudentProfilePage() {
                 Riwayat Belajar
               </h3>
 
-              <p className="mt-1 text-sm text-gray-400">
+              <p className="mt-1 text-sm text-gray-600">
                 Lihat semua aktivitas belajar.
               </p>
             </div>
@@ -490,7 +477,7 @@ export default function StudentProfilePage() {
         </Link>
 
         {/* FOOTER */}
-        <footer className="mt-8 border-t border-purple-100 py-5 text-center text-xs text-gray-400">
+        <footer className="mt-8 border-t border-purple-100 py-5 text-center text-xs text-gray-500">
           © 2026 LinguaSpace. All rights reserved.
         </footer>
 

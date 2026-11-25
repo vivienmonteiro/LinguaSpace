@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -64,7 +65,6 @@ export default function Home() {
 
   // =========================================
   // GAMBAR KURSUS
-  // Nama file tanpa ekstensi
   // =========================================
   const courseImages = {
     english: "/images/courses/english",
@@ -157,10 +157,7 @@ export default function Home() {
 
           {/* NAVIGATION */}
           <div className="hidden items-center gap-8 md:flex">
-            <a
-              href="/"
-              className="font-semibold text-[#7047ed]"
-            >
+            <a href="/" className="font-semibold text-[#7047ed]">
               Home
             </a>
 
@@ -210,7 +207,6 @@ export default function Home() {
       ====================================== */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#faf9ff] via-[#f4f0ff] to-[#eee7ff] px-5 py-16 md:px-10 md:py-24">
 
-        {/* Dekorasi */}
         <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-purple-200/30 blur-3xl" />
 
         <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-violet-300/30 blur-3xl" />
@@ -251,7 +247,6 @@ export default function Home() {
                 <h3 className="text-2xl font-extrabold text-[#7144dc]">
                   {languages.length}+
                 </h3>
-
                 <p className="text-sm text-[#8983aa]">
                   Languages
                 </p>
@@ -261,7 +256,6 @@ export default function Home() {
                 <h3 className="text-2xl font-extrabold text-[#7144dc]">
                   {courses.length}+
                 </h3>
-
                 <p className="text-sm text-[#8983aa]">
                   Courses
                 </p>
@@ -271,7 +265,6 @@ export default function Home() {
                 <h3 className="text-2xl font-extrabold text-[#7144dc]">
                   Anytime
                 </h3>
-
                 <p className="text-sm text-[#8983aa]">
                   Learn at your pace
                 </p>
@@ -282,21 +275,18 @@ export default function Home() {
           {/* HERO ILUSTRASI */}
           <div className="relative flex min-h-[350px] items-center justify-center md:min-h-[440px]">
 
-            {/* Lingkaran background */}
             <div className="absolute h-[300px] w-[300px] rounded-full bg-gradient-to-br from-[#e4d9ff] to-[#c9b5ff] shadow-inner md:h-[390px] md:w-[390px]" />
 
             <div className="absolute h-[250px] w-[250px] rounded-full border border-white/70 md:h-[330px] md:w-[330px]" />
 
             <div className="absolute h-[200px] w-[200px] rounded-full border border-white/50 md:h-[270px] md:w-[270px]" />
 
-            {/* Planet */}
             <div className="relative z-10 flex h-48 w-48 items-center justify-center rounded-full bg-gradient-to-br from-[#b8a0ff] via-[#8a67ef] to-[#6241cb] shadow-2xl shadow-purple-300 md:h-64 md:w-64">
               <span className="text-8xl drop-shadow-lg md:text-9xl">
                 🌎
               </span>
             </div>
 
-            {/* Floating greetings */}
             <div className="absolute left-4 top-10 rotate-[-8deg] rounded-2xl bg-white px-5 py-3 font-bold text-[#7444dd] shadow-lg md:left-12">
               Hello!
             </div>
@@ -365,7 +355,7 @@ export default function Home() {
 
           {/* LANGUAGE CARDS */}
           {!loading && !error && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
               {languages.map((language) => (
                 <button
@@ -374,12 +364,11 @@ export default function Home() {
                     setSelectedLanguage(language.name);
                     exploreCourses();
                   }}
-                  className="group flex items-center gap-3 rounded-2xl border border-purple-100 bg-white/90 p-3 text-left shadow-sm transition hover:-translate-y-1 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100 md:p-4"
+                  className="group flex w-full min-w-0 items-center gap-3 rounded-2xl border border-purple-100 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-100"
                 >
 
                   {/* BENDERA */}
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-50 shadow-sm">
-
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-purple-50 shadow-sm">
                     {languageFlags[language.name] ? (
                       <img
                         src={languageFlags[language.name]}
@@ -394,16 +383,15 @@ export default function Home() {
                         🌍
                       </span>
                     )}
-
                   </div>
 
                   {/* NAMA DAN JUMLAH KURSUS */}
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-bold text-[#39306e]">
+                    <h3 className="whitespace-nowrap text-sm font-bold text-[#39306e]">
                       {language.name}
                     </h3>
 
-                    <p className="text-xs text-[#8983aa]">
+                    <p className="mt-1 whitespace-nowrap text-xs text-[#8983aa]">
                       {languageCourseCount(language.id)} courses
                     </p>
                   </div>
@@ -539,11 +527,9 @@ export default function Home() {
                             onError={(e) => {
                               const img = e.currentTarget;
 
-                              // Coba JPEG -> JPG
                               if (img.src.endsWith(".jpeg")) {
                                 img.src = `${imageBase}.jpg`;
                               } else {
-                                // Jika keduanya gagal, tampilkan fallback
                                 img.style.display = "none";
 
                                 const fallback =
@@ -558,7 +544,6 @@ export default function Home() {
                             }}
                           />
 
-                          {/* FALLBACK */}
                           <div
                             className="course-image-fallback h-full w-full items-center justify-center"
                             style={{ display: "none" }}
@@ -661,7 +646,6 @@ export default function Home() {
       <section className="px-5 py-16 md:px-10 md:py-20">
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#7544e9] via-[#8953f2] to-[#a66af7] px-8 py-12 text-white shadow-xl shadow-purple-200 md:px-16 md:py-16">
 
-          {/* DEKORASI */}
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full border-[30px] border-white/10" />
 
           <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/10" />
