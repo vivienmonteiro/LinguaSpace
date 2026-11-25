@@ -1,3 +1,4 @@
+
 import pool from "@/lib/db";
 import { getSession } from "@/lib/session";
 import bcrypt from "bcryptjs";
@@ -16,7 +17,7 @@ async function cekAdmin() {
   return { user: session.user };
 }
 
-// GET: mengambil seluruh user
+// GET: mengambil seluruh user beserta status pengajuan Teacher
 export async function GET() {
   try {
     const auth = await cekAdmin();
@@ -29,9 +30,24 @@ export async function GET() {
     }
 
     const result = await pool.query(`
-      SELECT id, username, email, role, created_at
-      FROM users
-      ORDER BY id DESC
+      SELECT
+        u.id,
+        u.username,
+        u.email,
+        u.role,
+        u.created_at,
+        ta.status AS teacher_application_status,
+        ta.requested_at AS teacher_application_requested_at,
+        ta.approved_at AS teacher_application_approved_at
+      FROM users u
+      LEFT JOIN LATERAL (
+        SELECT status, requested_at, approved_at
+        FROM teacher_applications
+        WHERE user_id = u.id
+        ORDER BY requested_at DESC
+        LIMIT 1
+      ) ta ON true
+      ORDER BY u.id DESC
     `);
 
     return Response.json({

@@ -54,7 +54,7 @@ export default function StudentDashboard({ user }) {
           })
         );
 
-        setCourses(result.data || []);
+        setCourses(result.data);
         setEnrolledCourses(coursesWithProgress);
       } catch {
         setError("Gagal menghubungi server.");
@@ -245,14 +245,6 @@ export default function StudentDashboard({ user }) {
             <span className="text-xl">♙</span>
             Profil
           </Link>
-
-          <Link
-            href="/student/certificate"
-            className="flex items-center gap-4 rounded-2xl px-5 py-3.5 text-[#393779] transition hover:bg-purple-50"
-          >
-            <span className="text-xl">🎓</span>
-            Certificate
-          </Link>
         </nav>
 
         {/* Sidebar Decoration */}
@@ -319,13 +311,6 @@ export default function StudentDashboard({ user }) {
           >
             Profil
           </Link>
-
-          <Link
-            href="/student/certificate"
-            className="shrink-0 rounded-xl bg-purple-50 px-4 py-2 text-sm text-violet-700"
-          >
-            🎓 Certificate
-          </Link>
         </nav>
       </div>
 
@@ -371,7 +356,7 @@ export default function StudentDashboard({ user }) {
               </p>
             </div>
 
-            {/* Dekorasi lingkaran */}
+            {/* Dekorasi lingkaran tanpa avatar dan tulisan bahasa */}
             <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-purple-200/50" />
             <div className="absolute right-40 bottom-0 h-24 w-24 rounded-full bg-violet-200/40" />
           </section>
@@ -462,7 +447,7 @@ export default function StudentDashboard({ user }) {
               </div>
 
               <Link
-                href="/student/explore"
+                href="/student/courses"
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 px-6 py-3 font-semibold text-white shadow-md shadow-purple-200 transition hover:scale-[1.02] md:w-auto"
               >
                 Browse Courses
@@ -545,7 +530,7 @@ export default function StudentDashboard({ user }) {
                 </p>
 
                 <Link
-                  href="/student/explore"
+                  href="/student/courses"
                   className="mt-5 inline-block rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white hover:bg-violet-700"
                 >
                   Explore Courses

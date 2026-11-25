@@ -46,20 +46,15 @@ export default function AdminUsersPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // API mengirim data melalui result.data
         setUsers(result.data || []);
       } else {
         setUsers([]);
-        setMessage(
-          result.message || "Gagal mengambil data users."
-        );
+        setMessage(result.message || "Gagal mengambil data users.");
       }
     } catch (error) {
       console.error("Load users error:", error);
       setUsers([]);
-      setMessage(
-        "Terjadi kesalahan saat mengambil data users."
-      );
+      setMessage("Terjadi kesalahan saat mengambil data users.");
     } finally {
       setLoading(false);
     }
@@ -100,15 +95,11 @@ export default function AdminUsersPage() {
 
         await loadUsers();
       } else {
-        setMessage(
-          result.message || "Gagal menambahkan user."
-        );
+        setMessage(result.message || "Gagal menambahkan user.");
       }
     } catch (error) {
       console.error("Add user error:", error);
-      setMessage(
-        "Terjadi kesalahan saat menambahkan user."
-      );
+      setMessage("Terjadi kesalahan saat menambahkan user.");
     }
   }
 
@@ -135,21 +126,18 @@ export default function AdminUsersPage() {
     }
 
     try {
-      const response = await fetch(
-        `/api/admin/users/${editUser.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: editUsername,
-            email: editEmail,
-            role: editRole,
-            password: editPassword,
-          }),
-        }
-      );
+      const response = await fetch(`/api/admin/users/${editUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: editUsername,
+          email: editEmail,
+          role: editRole,
+          password: editPassword,
+        }),
+      });
 
       const result = await response.json();
 
@@ -161,15 +149,11 @@ export default function AdminUsersPage() {
 
         await loadUsers();
       } else {
-        setMessage(
-          result.message || "Gagal memperbarui user."
-        );
+        setMessage(result.message || "Gagal memperbarui user.");
       }
     } catch (error) {
       console.error("Edit user error:", error);
-      setMessage(
-        "Terjadi kesalahan saat memperbarui user."
-      );
+      setMessage("Terjadi kesalahan saat memperbarui user.");
     }
   }
 
@@ -182,12 +166,9 @@ export default function AdminUsersPage() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch(
-        `/api/admin/users/${user.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: "DELETE",
+      });
 
       const result = await response.json();
 
@@ -195,15 +176,11 @@ export default function AdminUsersPage() {
         setMessage("User berhasil dihapus!");
         await loadUsers();
       } else {
-        setMessage(
-          result.message || "Gagal menghapus user."
-        );
+        setMessage(result.message || "Gagal menghapus user.");
       }
     } catch (error) {
       console.error("Delete user error:", error);
-      setMessage(
-        "Terjadi kesalahan saat menghapus user."
-      );
+      setMessage("Terjadi kesalahan saat menghapus user.");
     }
   }
 
@@ -214,7 +191,8 @@ export default function AdminUsersPage() {
     return (
       user.username?.toLowerCase().includes(keyword) ||
       user.email?.toLowerCase().includes(keyword) ||
-      user.role?.toLowerCase().includes(keyword)
+      user.role?.toLowerCase().includes(keyword) ||
+      user.teacher_application_status?.toLowerCase().includes(keyword)
     );
   });
 
@@ -230,16 +208,41 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Warna badge status pengajuan Teacher
+  function getApplicationStatusStyle(status) {
+    switch (status) {
+      case "pending":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "approved":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "rejected":
+        return "bg-red-100 text-red-700 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-500 border-gray-200";
+    }
+  }
+
+  // Label status pengajuan Teacher
+  function getApplicationStatusLabel(status) {
+    switch (status) {
+      case "pending":
+        return "Pending";
+      case "approved":
+        return "Approved";
+      case "rejected":
+        return "Rejected";
+      default:
+        return "-";
+    }
+  }
+
   const inputStyle =
     "w-full rounded-xl border border-purple-200 bg-white px-4 py-3 text-sm font-medium text-[#25245b] outline-none transition placeholder:text-purple-300 focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
 
   return (
     <div className="min-h-screen bg-[#f7f6ff] md:flex">
-
       {/* SIDEBAR */}
       <aside className="z-30 w-full border-b border-purple-100 bg-white md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-b-0 md:border-r">
-
-        {/* LOGO */}
         <div className="border-b border-purple-100 px-6 py-6">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 text-2xl shadow-md shadow-purple-200">
@@ -257,7 +260,6 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
-        {/* NAVIGATION */}
         <div className="px-4 pt-6">
           <p className="mb-4 px-3 text-xs font-extrabold uppercase tracking-widest text-violet-400">
             Main Menu
@@ -284,9 +286,7 @@ export default function AdminUsersPage() {
                   {item.icon}
                 </span>
 
-                <span className="text-sm font-extrabold">
-                  {item.name}
-                </span>
+                <span className="text-sm font-extrabold">{item.name}</span>
 
                 {index === 1 && (
                   <span className="ml-auto h-2 w-2 rounded-full bg-white" />
@@ -296,7 +296,6 @@ export default function AdminUsersPage() {
           </nav>
         </div>
 
-        {/* SIDEBAR BOTTOM */}
         <div className="mt-auto hidden p-5 md:block">
           <div className="rounded-2xl bg-gradient-to-br from-[#f0eaff] via-[#f5f1ff] to-[#e9e5ff] p-4">
             <div className="mb-2 text-2xl">💜</div>
@@ -312,7 +311,6 @@ export default function AdminUsersPage() {
 
       {/* MAIN CONTENT */}
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:ml-64 md:px-8 md:py-8 lg:px-10">
-
         {/* HEADER */}
         <header className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>
@@ -344,8 +342,8 @@ export default function AdminUsersPage() {
             </h3>
 
             <p className="mt-3 text-sm font-medium leading-6 text-[#7772A5] md:text-base">
-              Add new accounts, update user information, and manage
-              Student, Teacher, and Admin roles in LinguaSpace.
+              Add new accounts, update user information, and manage Student,
+              Teacher, and Admin roles in LinguaSpace.
             </p>
           </div>
 
@@ -408,7 +406,9 @@ export default function AdminUsersPage() {
                       </h3>
                     </div>
 
-                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${card.iconBg} text-2xl transition duration-300 group-hover:scale-110`}>
+                    <div
+                      className={`flex h-14 w-14 items-center justify-center rounded-2xl ${card.iconBg} text-2xl transition duration-300 group-hover:scale-110`}
+                    >
                       {card.icon}
                     </div>
                   </div>
@@ -538,13 +538,14 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[750px] text-left">
+            <table className="w-full min-w-[950px] text-left">
               <thead className="bg-[#eeebff]">
                 <tr className="text-xs font-extrabold uppercase tracking-wider text-[#393779]">
                   <th className="px-6 py-4">ID</th>
                   <th className="px-6 py-4">Username</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Teacher Application</th>
                   <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
@@ -552,13 +553,19 @@ export default function AdminUsersPage() {
               <tbody className="divide-y divide-purple-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center font-semibold text-[#77749d]">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-12 text-center font-semibold text-[#77749d]"
+                    >
                       Loading users...
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-sm font-semibold text-[#8885a8]">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-12 text-center text-sm font-semibold text-[#8885a8]"
+                    >
                       {users.length === 0
                         ? "No users available."
                         : "No users match your search."}
@@ -566,7 +573,10 @@ export default function AdminUsersPage() {
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="transition hover:bg-[#faf9ff]">
+                    <tr
+                      key={user.id}
+                      className="transition hover:bg-[#faf9ff]"
+                    >
                       <td className="px-6 py-4 text-sm font-bold text-[#77749d]">
                         #{user.id}
                       </td>
@@ -580,8 +590,24 @@ export default function AdminUsersPage() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold capitalize ${getRoleStyle(user.role)}`}>
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold capitalize ${getRoleStyle(
+                            user.role
+                          )}`}
+                        >
                           {user.role}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold ${getApplicationStatusStyle(
+                            user.teacher_application_status
+                          )}`}
+                        >
+                          {getApplicationStatusLabel(
+                            user.teacher_application_status
+                          )}
                         </span>
                       </td>
 

@@ -56,11 +56,9 @@ export default function TeacherApplicationPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f6ff]">
-
-      {/* ================= NAVBAR ================= */}
+      {/* NAVBAR */}
       <nav className="sticky top-0 z-20 border-b border-purple-100 bg-white/95 px-5 py-4 shadow-sm backdrop-blur md:px-10">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-
           <Link
             href="/dashboard"
             className="flex items-center gap-3 text-2xl font-extrabold text-violet-700"
@@ -68,7 +66,6 @@ export default function TeacherApplicationPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-700 text-xl text-white">
               🪐
             </span>
-
             LinguaSpace
           </Link>
 
@@ -78,17 +75,14 @@ export default function TeacherApplicationPage() {
           >
             ← Dashboard
           </Link>
-
         </div>
       </nav>
 
-      {/* ================= MAIN CONTENT ================= */}
+      {/* MAIN CONTENT */}
       <section className="mx-auto max-w-6xl px-5 py-10 md:py-12">
-
-        {/* ================= PURPLE BANNER ================= */}
+        {/* PURPLE BANNER */}
         <div className="mx-auto mb-8 w-full max-w-4xl overflow-hidden rounded-[20px] bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-700 p-4 text-white shadow-lg md:p-5">
           <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
-
             <div>
               <span className="inline-block rounded-full border border-white/30 bg-white/15 px-4 py-2 text-xs font-bold tracking-widest">
                 BECOME A TEACHER
@@ -110,13 +104,11 @@ export default function TeacherApplicationPage() {
             <div className="hidden h-40 w-40 items-center justify-center rounded-[35px] border border-white/20 bg-white/10 text-8xl shadow-inner md:flex">
               👩🏻‍🏫
             </div>
-
           </div>
         </div>
 
-        {/* ================= TEACHER APPLICATION FORM ================= */}
+        {/* TEACHER APPLICATION FORM */}
         <section className="mx-auto max-w-4xl rounded-3xl border border-purple-100 bg-white p-6 shadow-sm md:p-9">
-
           <div className="mb-7">
             <p className="text-sm font-bold tracking-widest text-violet-600">
               TEACHER REGISTRATION
@@ -133,8 +125,7 @@ export default function TeacherApplicationPage() {
           </div>
 
           <form onSubmit={handleApplication} className="space-y-5">
-
-            {/* Full Name */}
+            {/* FULL NAME */}
             <div>
               <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Full Name
@@ -150,7 +141,7 @@ export default function TeacherApplicationPage() {
               />
             </div>
 
-            {/* Language */}
+            {/* LANGUAGE */}
             <div>
               <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Language You Want to Teach
@@ -160,7 +151,7 @@ export default function TeacherApplicationPage() {
                 required
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full rounded-xl border border-purple-100 bg-[#fcfbff] px-4 py-3 text-gray-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-purple-100"
+                className="w-full cursor-pointer rounded-xl border border-purple-100 bg-[#fcfbff] px-4 py-3 text-gray-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-purple-100"
               >
                 <option value="" disabled>
                   Select language
@@ -169,14 +160,15 @@ export default function TeacherApplicationPage() {
                 <option value="English">English</option>
                 <option value="Japanese">Japanese</option>
                 <option value="Korean">Korean</option>
+                <option value="Mandarin">Mandarin</option>
                 <option value="French">French</option>
                 <option value="Spanish">Spanish</option>
                 <option value="Portuguese">Portuguese</option>
-                <option value="Other">Other</option>
+                
               </select>
             </div>
 
-            {/* Teaching Experience */}
+            {/* TEACHING EXPERIENCE */}
             <div>
               <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Teaching Experience
@@ -192,7 +184,7 @@ export default function TeacherApplicationPage() {
               />
             </div>
 
-            {/* Application Description */}
+            {/* APPLICATION DESCRIPTION */}
             <div>
               <label className="mb-2 block text-sm font-bold text-[#393779]">
                 Application Description
@@ -208,7 +200,7 @@ export default function TeacherApplicationPage() {
               />
             </div>
 
-            {/* Notification */}
+            {/* NOTIFICATION */}
             <div className="rounded-2xl border border-purple-100 bg-purple-50 p-4 text-sm leading-6 text-purple-900">
               <div className="flex items-start gap-3">
                 <span className="text-xl">🔔</span>
@@ -220,7 +212,7 @@ export default function TeacherApplicationPage() {
               </div>
             </div>
 
-            {/* Success / Error Message */}
+            {/* SUCCESS / ERROR MESSAGE */}
             {message && (
               <div
                 className={`rounded-xl border p-4 text-sm font-medium ${
@@ -233,7 +225,7 @@ export default function TeacherApplicationPage() {
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* SUBMIT BUTTON */}
             <button
               type="submit"
               disabled={loading}
@@ -243,15 +235,13 @@ export default function TeacherApplicationPage() {
                 ? "Submitting Application..."
                 : "Submit Application →"}
             </button>
-
           </form>
         </section>
 
-        {/* ================= FOOTER ================= */}
+        {/* FOOTER */}
         <footer className="py-9 text-center text-sm text-violet-400">
           © 2026 LinguaSpace · Keep learning, keep growing 💜
         </footer>
-
       </section>
     </main>
   );
